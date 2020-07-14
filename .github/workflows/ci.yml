@@ -2,6 +2,7 @@ name: CI
 on:
   - push
   - pull_request
+  - release
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
@@ -10,7 +11,7 @@ jobs:
       matrix:
         version:
           - '1.0'
-          - '1.5'
+          - '1.4'
           - 'nightly'
         os:
           - ubuntu-latest
@@ -18,6 +19,7 @@ jobs:
           - windows-latest
         arch:
           - x64
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
@@ -36,10 +38,16 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
+        continue-on-error: ${{ matrix.version == 'nightly' }}
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v1
         with:
           file: lcov.info
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    # don't run ci twice on my own PRs
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest
@@ -57,3 +65,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+    # don't run ci twice on my own PRs
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
