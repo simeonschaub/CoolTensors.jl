@@ -1,0 +1,3 @@
+[deps]
+CoolTensors = "85b16c79-57f6-4a30-832b-f4a8791f4758"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
