@@ -1,6 +1,6 @@
 module CoolTensors
 
-export Tensor, @t_str, raise, lower, TCartesianIndex
+export Tensor, @T_str, raise, lower, TCartesianIndex
 export TScalar, TVector, TCovector, TLinearMap, TBilinear
 
 struct Tensor{T,N,ipos,A<:AbstractArray{T,N}} <: AbstractArray{T,N}
@@ -33,7 +33,7 @@ function deleteat(ipos::IndexPos{N}, i::Int) where {N}
     IndexPos{N-1}((ipos.x & (mask >> 1)) | ((ipos.x & ~mask) >> 1))
 end
 function Base.show(io::IO, ipos::IndexPos{N}) where {N}
-    print(io, "t\"")
+    print(io, "T\"")
     for i in 1:N
         print(io, ipos[i] ? ''' : ',')
     end
@@ -41,17 +41,21 @@ function Base.show(io::IO, ipos::IndexPos{N}) where {N}
     nothing
 end
 
-macro t_str(s)
-    x = mapreduce(|, enumerate(s), init=UInt(0)) do (i, c)
-        if c === '''
-            UInt(1) << (i-1)
-        elseif c === ','
+macro T_str(s)
+    i = 0
+    x = UInt(0)
+    for c in s
+        isspace(c) && continue
+        x |= if c === ''' || c === '^'
+            UInt(1) << i
+        elseif c === ',' || c === '_' || c === '.'
             UInt(0)
         else
             throw(ArgumentError("Index positions can only be ''' and ','"))
         end
+        i += 1
     end
-    :(IndexPos{$(length(s))}($x))
+    :(IndexPos{$i}($x))
 end
 
 for (typed_f, f) in [
@@ -59,13 +63,13 @@ for (typed_f, f) in [
 ]
     @eval Base.$typed_f(ipos::IndexPos, args...) = ipos(Base.$f(args...))
 end
-Base.getindex(::IndexPos{0}, x) = t""(fill(x))
+Base.getindex(::IndexPos{0}, x) = T""(fill(x))
 
-const TScalar = Tensor{T,0,t"",<:AbstractArray{T,0}} where {T}
-const TVector = Tensor{T,1,t"'",<:AbstractVector{T}} where {T}
-const TCovector = Tensor{T,1,t",",<:AbstractVector{T}} where {T}
-const TLinearMap = Tensor{T,2,t"',",<:AbstractMatrix{T}} where {T}
-const TBilinear = Tensor{T,2,t",,",<:AbstractMatrix{T}} where {T}
+const TScalar = Tensor{T,0,T""} where {T}
+const TVector = Tensor{T,1,T"'"} where {T}
+const TCovector = Tensor{T,1,T","} where {T}
+const TLinearMap = Tensor{T,2,T"',"} where {T}
+const TBilinear = Tensor{T,2,T",,"} where {T}
 
 function (t::Tensor{<:Any,N})(v::Union{TVector,TCovector}; dims=N) where {N}
     N == 0 && throw(ArgumentError("Cannot contract Scalar with $(typeof(v))"))

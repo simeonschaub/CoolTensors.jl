@@ -5,21 +5,21 @@
 [![Build Status](https://github.com/simeonschaub/CoolTensors.jl/workflows/CI/badge.svg)](https://github.com/simeonschaub/CoolTensors.jl/actions)
 [![Coverage](https://codecov.io/gh/simeonschaub/CoolTensors.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/simeonschaub/CoolTensors.jl)
 
-The easiest way to create `Tensor` objects is using `IndexPos` objects. They can easily created with the custom `t"..."` string literal. `'` denotes contravariant indices and `,` covariant indices:
+The easiest way to create `Tensor` objects is using `IndexPos` objects. They can easily created with the custom `T"..."` string literal. `'` denotes contravariant indices and `,` covariant indices:
 
 ```julia
-julia> x = t"'"[√2, 1]
-2-element Tensor{Float64,1,t"'",Array{Float64,1}}:
+julia> x = T"'"[√2, 1]
+2-element Tensor{Float64,1,T"'",Array{Float64,1}}:
  1.4142135623730951
  1.0
 
-julia> Λ(ψ) = t"',"[cosh(ψ) -sinh(ψ); -sinh(ψ) cosh(ψ)]
+julia> Λ(ψ) = T"',"[cosh(ψ) -sinh(ψ); -sinh(ψ) cosh(ψ)]
 Λ (generic function with 1 method)
 
 julia> using LinearAlgebra
 
-julia> g = t",,"(Diagonal([1, -1]))
-2×2 Tensor{Int64,2,t",,",Diagonal{Int64,Array{Int64,1}}}:
+julia> g = T",,"(Diagonal([1, -1]))
+2×2 Tensor{Int64,2,T",,",Diagonal{Int64,Array{Int64,1}}}:
  1   0
  0  -1
 ```
@@ -28,12 +28,12 @@ julia> g = t",,"(Diagonal([1, -1]))
 
 ```julia
 julia> lower(x, 1)
-2-element Tensor{Float64,1,t",",Array{Float64,1}}:
+2-element Tensor{Float64,1,T",",Array{Float64,1}}:
  1.4142135623730951
  1.0
 
 julia> 𝔤 = raise(g, 1, 2)
-2×2 Tensor{Int64,2,t"''",Diagonal{Int64,Array{Int64,1}}}:
+2×2 Tensor{Int64,2,T"''",Diagonal{Int64,Array{Int64,1}}}:
  1   0
  0  -1
 ```
@@ -54,7 +54,7 @@ julia> g[\; 2 2]
 -1
 
 julia> g[1; 2]
-ERROR: ArgumentError: Index positions t"'," don't match indices of Tensor t",,"
+ERROR: ArgumentError: Index positions T"'," don't match indices of Tensor T",,"
 Stacktrace:
 [...]
 ```
@@ -63,7 +63,7 @@ Tensors can be called with vectors and covectors. The rightmost index is always 
 
 ```julia
 julia> Λ(.5)(x)
-2-element Tensor{Float64,1,t"'",Array{Float64,1}}:
+2-element Tensor{Float64,1,T"'",Array{Float64,1}}:
  1.073608627785168
  0.3906859168881719
 
@@ -73,7 +73,7 @@ Stacktrace:
 [...]
 
 julia> Λ(.5)(:, lower(x, 1))
-2-element Tensor{Float64,1,t",",Array{Float64,1}}:
+2-element Tensor{Float64,1,T",",Array{Float64,1}}:
  1.073608627785168
  0.3906859168881719
 
