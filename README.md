@@ -93,4 +93,13 @@ julia> g(Λ(.5)(x), Λ(.5)(x))
 
 QED.
 
+`⊗` (`\otimes`) from [TensorCore.jl](https://github.com/JuliaMath/TensorCore.jl) is overloaded and exported to calculate the tensor product of two `Tensor`s:
+
+```julia
+julia> x ⊗ lower(x, 1)
+2×2 Tensor{Float64,2,T"',",Array{Float64,2}}:
+ 2.0      1.41421
+ 1.41421  1.0
+```
+
 *Disclaimer:* This is currently only a prototype. It is still missing a lot of features. Performance should be pretty bad. There will be bugs. Don't use this for any productive work.
