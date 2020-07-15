@@ -3,8 +3,12 @@ uuid = "85b16c79-57f6-4a30-832b-f4a8791f4758"
 authors = ["Simeon Schaub <simeondavidschaub99@gmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+TensorCore = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
+
 [compat]
 julia = "1"
+TensorCore = "0.1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

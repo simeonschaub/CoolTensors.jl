@@ -12,6 +12,7 @@ function Base.getindex(t::Tensor, inds::Int...)
     @boundscheck checkbounds(t.parent, inds...)
     @inbounds t.parent[inds...]
 end
+Base.parent(t::Tensor) = t.parent
 
 struct IndexPos{N}
     # TODO: Should this be UInt64 instead?
@@ -137,6 +138,15 @@ function Base.typed_hvcat(t::Tensor{<:Any,N,ipos}, alt::Tuple, i...) where {N,ip
         throw(ArgumentError("Index positions $_ipos don't match indices of Tensor $ipos"))
     I = TCartesianIndex{N,ipos}(reduce((x, y) -> (x..., y...), i))
     t[I]
+end
+
+using TensorCore
+export ⊗
+
+function TensorCore.tensor(t::Tensor{<:Any,N,ipos}, s::Tensor{<:Any,M,jpos}) where {N,ipos,M,jpos}
+    ts = tensor(parent(t), parent(s))
+    ijpos = IndexPos{N+M}((ipos.x | jpos.x << N))
+    Tensor{eltype(ts), N+M, ijpos, typeof(ts)}(ts)
 end
 
 end
