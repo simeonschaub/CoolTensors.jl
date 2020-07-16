@@ -5,6 +5,8 @@ using Test
     # Write your tests here.
 end
 
-using Documenter
-DocMeta.setdocmeta!(CoolTensors, :DocTestSetup, :(using CoolTensors); recursive=true)
-doctest(CoolTensors; manual = false)
+if VERSION <= v"1.5"
+    using Documenter
+    DocMeta.setdocmeta!(CoolTensors, :DocTestSetup, :(using CoolTensors); recursive=true)
+    doctest(CoolTensors; manual = false)
+end
