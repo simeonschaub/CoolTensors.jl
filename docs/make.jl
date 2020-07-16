@@ -1,6 +1,8 @@
 using CoolTensors
 using Documenter
 
+DocMeta.setdocmeta!(CoolTensors, :DocTestSetup, :(using CoolTensors); recursive=true)
+
 makedocs(;
     modules=[CoolTensors],
     authors="Simeon Schaub <simeondavidschaub99@gmail.com> and contributors",
@@ -18,4 +20,5 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/simeonschaub/CoolTensors.jl",
+    push_preview = true,
 )
