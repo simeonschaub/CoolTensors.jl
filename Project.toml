@@ -8,7 +8,7 @@ TensorCore = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
 
 [compat]
 TensorCore = "0.1"
-julia = "1"
+julia = "1.1" # FIXME: the only reason 1.0 doesn't work, is because of our eachslice hack
 
 [extras]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
