@@ -12,7 +12,8 @@ module CoolTensors
 end
 CoolTensors
 
-export Tensor, @T_str, raise, lower, TCartesianIndex, TI
+export Tensor, @T_str, raise, lower, TCartesianIndex, TI,
+    tbegin, tend
 
 include("tensor.jl")
 
@@ -25,7 +26,9 @@ const TLinearMap = Tensor{T,2,T"',"} where {T}
 const TBilinear = Tensor{T,2,T",,"} where {T}
 
 include("contractions.jl")
-include("tcartesianindex.jl")
+include("tindex.jl")
+
+include("tbeginend.jl")
 
 export ⊗ # from TensorCore.jl
 
