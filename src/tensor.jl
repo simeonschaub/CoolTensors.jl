@@ -7,15 +7,18 @@ struct Tensor{T,N,ipos,A<:AbstractArray{T,N}} <: AbstractArray{T,N}
 end
 
 Base.size(t::Tensor) = size(t.parent)
-function Base.getindex(t::Tensor, inds::Int...)
-    @boundscheck checkbounds(t.parent, inds...)
-    @inbounds t.parent[inds...]
-end
-function Base.setindex!(t::Tensor, x, inds::Int...)
-    @boundscheck checkbounds(t.parent, inds...)
-    @inbounds t.parent[inds...] = x
-end
+Base.firstindex(t::Tensor, i...) = firstindex(t.parent, i...)
+Base.lastindex(t::Tensor, i...) = lastindex(t.parent, i...)
 Base.parent(t::Tensor) = t.parent
+
+tto_indices(t, inds) = expand_tbeginends(t, to_indices(t, (), inds))
+Base.@propagate_inbounds function Base.getindex(t::Tensor, inds...)
+    t.parent[tto_indices(t, inds)...]
+end
+Base.@propagate_inbounds function Base.setindex!(t::Tensor, x, inds...)
+    t.parent[tto_indices(t, inds)...] = x
+end
+Base.checkbounds(t::Tensor, inds...) = checkbounds(t.parent, tto_indices(t, inds)...)
 
 ###
 ### IndexPos
