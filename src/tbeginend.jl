@@ -15,11 +15,12 @@ for (tend, _tend, l) in [(:tbegin, :_tbegin, :f), (:tend, :_tend, :l)]
         const $tend = TBeginEnd($_tend)
 
         Base.show(io::IO, ::TBeginEnd{typeof($_tend)}) = print(io, $(string(tend)))
-        function Base.show(io::IO, tend::TBeginEnd{<:LegibleLambda})
-            show(io, TBeginEnd)
-            show(io, tend.f)
-        end
     end
+end
+
+function Base.show(io::IO, tend::TBeginEnd{<:LegibleLambda})
+    show(io, TBeginEnd)
+    show(io, tend.f)
 end
 
 for f in [:(:), :+, :-]

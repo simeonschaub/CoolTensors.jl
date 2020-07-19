@@ -12,7 +12,7 @@ module CoolTensors
 end
 CoolTensors
 
-export Tensor, @T_str, raise, lower, TCartesianIndex, TI,
+export Tensor, @T_str, raise, lower, TIndex, TI,
     tbegin, tend
 
 include("tensor.jl")

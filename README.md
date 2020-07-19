@@ -38,7 +38,7 @@ julia> 𝔤 = raise(g, 1, 2)
  0  -1
 ```
 
-Indexing can be done just like a regular array, using `TCartesianIndex`, which stores an additional `IndexPos` in the type parameter, or by using `hvcat` syntax. When using the latter, indices are separated by either whitespace or `;`, `;` switches the contra-/covariance of the following indices, whitespace means an index has the same contra-/covariance as the last index. To specify that the first index is covariant, write `\;` before the first index.
+Indexing can be done just like a regular array, using `TIndex`, which stores an additional `IndexPos` in the type parameter, or by using `hvcat` syntax. When using the latter, indices are separated by either whitespace or `;`, `;` switches the contra-/covariance of the following indices, whitespace means an index has the same contra-/covariance as the last index. To specify that the first index is covariant, write `\;` before the first index.
 
 ```julia
 julia> x[1]

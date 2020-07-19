@@ -34,6 +34,9 @@ function Base.to_indices(
     throw(ArgumentError("Index positions $_ipos don't match indices of Tensor $ipos"))
 end
 
+# needed for views
+Base.to_indices(t::Tensor, I::Tuple{TIndex}) = to_indices(t, axes(t), I)
+
 ###
 ### TI[1; 2 3; 4]
 ###
