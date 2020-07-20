@@ -36,8 +36,7 @@ end
 (::IndexPos{0})(x::Number) = x
 
 
-Base.getindex(ipos::IndexPos, i) = (ipos.x >> (i-1)) % Bool
-Base.lastindex(::IndexPos{N}) where {N} = N
+position(ipos::IndexPos, i) = (ipos.x >> (i-1)) % Bool
 function deleteat(ipos::IndexPos{N}, i::Int) where {N}
     mask = (UInt(1) << i) - UInt(1)
     IndexPos{N-1}((ipos.x & (mask >> 1)) | ((ipos.x & ~mask) >> 1))
@@ -45,7 +44,7 @@ end
 function Base.show(io::IO, ipos::IndexPos{N}) where {N}
     print(io, "T\"")
     for i in 1:N
-        print(io, ipos[i] ? ''' : ',')
+        print(io, position(ipos, i) ? ''' : ',')
     end
     print(io, '\"')
     nothing

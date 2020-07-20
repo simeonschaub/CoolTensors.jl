@@ -4,7 +4,7 @@
 
 function (t::Tensor{<:Any,N})(v::Union{TVector,TCovector}; dims=N) where {N}
     N == 0 && throw(ArgumentError("Cannot contract Scalar with $(typeof(v))"))
-    index_pos(t)[dims] !== index_pos(v)[1] ||
+    position(index_pos(t), dims) !== position(index_pos(v), 1) ||
         throw(ArgumentError("Tensor indices don't match"))
 
     # TODO: use an external package for tensor reductions
