@@ -37,6 +37,7 @@ Base.:(:)(x::TBeginEnd, s::Int, y::TBeginEnd) = TBeginEnd(@λ (f, l) -> x.f(f, l
 
 
 Base.to_index(i::TBeginEnd) = i
+expanded_dims(::Type{<:TBeginEnd}) = 1
 
 expand_tbeginend(t, dim, x::TBeginEnd) = x.f(firstindex(t, dim), lastindex(t, dim))
 expand_tbeginend(t, _, x) = x
