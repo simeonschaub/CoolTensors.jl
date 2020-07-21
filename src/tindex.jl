@@ -17,7 +17,7 @@ end
 ### (::Tensor)[::TIndex]( = x)
 ###
 
-function Base.to_indices(
+@inline function Base.to_indices(
     t::Tensor{<:Any,N,ipos},
     inds,
     I::Tuple{TIndex{N,ipos}}
@@ -26,7 +26,7 @@ function Base.to_indices(
     to_indices(t, inds, expand_tbeginends(t, first(I)).I)
 end
 
-function Base.to_indices(
+@noinline function Base.to_indices(
     ::Tensor{<:Any,<:Any,ipos},
     _,
     ::Tuple{TIndex{<:Any,_ipos}},
@@ -44,23 +44,93 @@ Base.to_indices(t::Tensor, I::Tuple{TIndex}) = to_indices(t, axes(t), I)
 struct _TI end
 const TI = _TI()
 
-function index_pos_from_alternations(alt::Tuple, current_ipos=true)
+### `@generated` typed_hvcat
+
+function static_index_pos_from_alternations(alt, ipos=true)
     i = 0
     x = UInt(0)
     while !isempty(alt)
         if first(alt) > 0
-            x |= UInt(current_ipos) << i
+            x |= UInt(ipos) << i
             i += 1
             alt = (first(alt) - 1, Base.tail(alt)...)
         else
-            current_ipos = !current_ipos
+            ipos = !ipos
+            alt = Base.tail(alt)
+        end
+    end
+    :(IndexPos{$i}($x))
+end
+
+expanded_dims(::Type{<:Union{Integer,AbstractUnitRange{<:Integer},Colon}}) = 1
+expanded_dims(::Type{<:Union{CartesianIndex{N},CartesianIndices{N}}}) where {N} = N
+expanded_dims(::Type{BitArray{N}}) where {N} = N
+expanded_dims(::Type{AbstractArray{T,N}}) where {T,N} = expanded_dims(T)
+expanded_dims(::Type) = -1
+
+function static_expand_indices(alt::Tuple, inds::Tuple{Vararg{Type}})
+    N = 0
+    new_alt = (0,)
+    alt_ptr = 1
+    for T_i in inds
+        n = expanded_dims(T_i)::Int
+        n == -1 && return nothing
+        N += n
+        new_alt = (Base.front(new_alt)..., last(new_alt) + n)
+        if alt_ptr == alt[length(new_alt)]
+            new_alt = (new_alt..., 0)
+            alt_ptr = 1
+        else
+            alt_ptr += 1
+        end
+    end
+    new_alt, N
+end
+
+function Base.typed_hvcat(
+    ::_TI,
+    ::Val{alt},
+    inds...;
+    start_ipos::Val{_start_ipos} = Val(true)
+) where {alt,_start_ipos}
+    if @generated
+        e = static_expand_indices(alt, inds)
+        e === nothing && return :(
+            _typed_hvcat_fallback(TI, $alt, $(inds...), start_ipos=_start_ipos)
+        )
+        alt, N = e
+        ipos = static_index_pos_from_alternations(alt, _start_ipos)
+        :(Base.@_inline_meta; TIndex{$N,$ipos}(inds))
+    else
+        _typed_hvcat_fallback(TI, alt, inds..., start_ipos=_start_ipos)
+    end
+end
+@inline function Base.typed_hvcat(::_TI, ::Val{alt}, ::typeof(\), inds...) where {alt}
+    Base.typed_hvcat(TI, Val{Base.tail(alt)}(), inds...; start_ipos=Val(false))
+end
+@inline function Base.typed_hvcat(::_TI, alt::T, inds...) where {T<:Tuple}
+    Base.typed_hvcat(TI, Val{alt}(), inds...)
+end
+
+### non-`@generated` typed_hvcat
+
+function index_pos_from_alternations_fallback(alt::Tuple, ipos=true)
+    i = 0
+    x = UInt(0)
+    while !isempty(alt)
+        if first(alt) > 0
+            x |= UInt(ipos) << i
+            i += 1
+            alt = (first(alt) - 1, Base.tail(alt)...)
+        else
+            ipos = !ipos
             alt = Base.tail(alt)
         end
     end
     IndexPos{i}(x)
 end
 
-function expand_indices(alt, inds)
+function expand_indices_fallback(alt, inds)
     new_inds = ()
     new_alt = (0,)
     alt_ptr = 1
@@ -78,30 +148,46 @@ function expand_indices(alt, inds)
     return new_alt, new_inds
 end
 
-function Base.typed_hvcat(::_TI, alt::Tuple, inds...) where {N}
-    alt, _inds = expand_indices(alt, inds)
-    ipos = index_pos_from_alternations(alt)
-    TIndex{length(_inds),ipos}(inds)
-end
-function Base.typed_hvcat(::_TI, alt::Tuple, ::typeof(\), inds...) where {N}
-    alt, _inds = expand_indices(Base.tail(alt), inds)
-    ipos = index_pos_from_alternations(alt, false)
+function _typed_hvcat_fallback(::_TI, alt::Tuple, inds...; start_ipos=true) where {N}
+    alt, _inds = expand_indices_fallback(alt, inds)
+    ipos = index_pos_from_alternations_fallback(alt, start_ipos)
     TIndex{length(_inds),ipos}(inds)
 end
 
 for T in [:_TI, :Tensor]
     @eval begin
-        Base.typed_vcat(x::$T, i...) = Base.typed_hvcat(x, ntuple(one, length(i)), i...)
-        Base.typed_hcat(x::$T, i...) = Base.typed_hvcat(x, (length(i),), i...)
+        @inline function Base.typed_vcat(x::$T, i::Vararg{Any,N}) where {N}
+            Base.typed_hvcat(x, Val{ntuple(one, N)}(), i...)
+        end
+        @inline function Base.typed_hcat(x::$T, i::Vararg{Any,N}) where {N}
+            Base.typed_hvcat(x, Val{(N,)}(), i...)
+        end
     end
 end
 # for TI[] and TI[1]
-Base.getindex(::_TI) = Base.typed_hvcat(TI, ())
-Base.getindex(::_TI, i) = Base.typed_hvcat(TI, (1,), i)
+@inline Base.getindex(::_TI) = Base.typed_hvcat(TI, Val{()}())
+@inline Base.getindex(::_TI, i) = Base.typed_hvcat(TI, Val{(1,)}(), i)
 
 ###
 ### (::Tensor)[1; 2 3; 4]
 ###
 
 # a[1; 2 3; 4] gets transformed into a[TI[1; 2 3; 4]]
-Base.typed_hvcat(t::Tensor, alt::Tuple, i...) = t[Base.typed_hvcat(TI, alt, i...)]
+@inline function Base.typed_hvcat(t::Tensor, alt::T, i...) where {T<:Tuple}
+    Base.typed_hvcat(t, Val{alt}(), i...)
+end
+@inline function Base.typed_hvcat(
+    t::Tensor{T,N,ipos},
+    alt::Val{_alt},
+    i...,
+) where {T,N,ipos,_alt}
+    t[Base.typed_hvcat(TI, alt, i...)]
+end
+@inline function Base.typed_hvcat(
+    t::Tensor{T,N,ipos},
+    alt::Val{_alt},
+    ::typeof(\),
+    i...,
+) where {T,N,ipos,_alt}
+    t[Base.typed_hvcat(TI, alt, \, i...)]
+end
