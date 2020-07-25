@@ -4,7 +4,10 @@ authors = ["Simeon Schaub <simeondavidschaub99@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
+Strided = "5e0ebb24-38b0-5f93-81fe-25c709ecae67"
 TensorCore = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
+TensorOperations = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
+Tullio = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"
 
 [compat]
 TensorCore = "0.1"

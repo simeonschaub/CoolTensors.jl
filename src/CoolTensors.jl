@@ -34,4 +34,6 @@ export ⊗ # from TensorCore.jl
 
 include("operations.jl")
 
+include("tensoroperations.jl")
+
 end
