@@ -4,11 +4,9 @@ authors = ["Simeon Schaub <simeondavidschaub99@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
-LegibleLambdas = "f1f30506-32fe-5131-bd72-7c197988f9e5"
 TensorCore = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
 
 [compat]
-LegibleLambdas = "0.2"
 TensorCore = "0.1"
 julia = "1.2"
 
