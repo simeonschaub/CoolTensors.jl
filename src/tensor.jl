@@ -29,7 +29,9 @@ struct IndexPos{N}
     x::UInt
 end
 
-index_pos(::Tensor{<:Any,<:Any,ipos}) where {ipos} = ipos
+index_pos(::T) where {T} = index_pos(T)
+@noinline index_pos(T::Type) = throw(MethodError(index_pos, (T,)))
+index_pos(::Type{<:Tensor{<:Any,<:Any,ipos}}) where {ipos} = ipos
 function (ipos::IndexPos{N})(a::AbstractArray{T,N}) where {T,N}
     Tensor{T,N,ipos,typeof(a)}(a)
 end
@@ -90,7 +92,7 @@ struct TAxis{T,ipos,R<:AbstractUnitRange{T}} <: AbstractUnitRange{T}
     parent::R
 end
 TAxis{T,ipos}(r::R) where {T,ipos,R} = TAxis{T,ipos,R}(r)
-index_pos(::TAxis{<:Any,ipos}) where {ipos} = ipos
+index_pos(::Type{<:TAxis{<:Any,ipos}}) where {ipos} = ipos
 Base.parent(t::TAxis) = t.parent
 Base.first(t::TAxis) = first(t.parent)
 Base.last(t::TAxis) = last(t.parent)
@@ -101,24 +103,46 @@ function Base.show(io::IO, t::TAxis{T,ipos}) where {T,ipos}
     print(io, ")")
 end
 
+# don't always explicitly show axes in default printing
+Base.summary(io::IO, t::Tensor) = Base.array_summary(io, t, axes(t.parent))
+
 function Base.axes(t::Tensor{<:Any,N,ipos}) where {N,ipos}
     ax = axes(t.parent)
     ntuple(i -> TAxis{Int,IndexPos{1}(UInt(position(ipos, i)))}(ax[i]), N)
 end
 
-function Base.similar(t::AbstractArray, eltype::Type, axes::Tuple{TAxis{Int},Vararg{TAxis{Int},Nm1}}) where {Nm1}
-    N = Nm1 + 1
+function index_pos(axes::NTuple{N,TAxis{Int}}) where {N}
     x = mapreduce(|, 1:N, init=UInt(0)) do i
         index_pos(axes[i]).x << (i-1)
     end
-    ipos = IndexPos{N}(x)
+    IndexPos{N}(x)
+end
+
+function Base.similar(
+    t::AbstractArray,
+    eltype::Type,
+    axes::Tuple{TAxis{Int},Vararg{TAxis{Int}}}
+)
+    ipos = index_pos(axes)
     paren = similar(t, eltype, map(parent, axes))
     ipos(paren)
 end
-function Base.similar(t::Tensor, eltype::Type, axes::NTuple{N,TAxis{Int}}) where {N}
+function Base.similar(
+    t::Tensor,
+    eltype::Type,
+    axes::Tuple{TAxis{Int},Vararg{TAxis{Int}}}
+)
     similar(t.parent, eltype, axes)
 end
 Base.similar(t::Tensor, eltype::Type, axes::Tuple{}) = T""(similar(t.parent, eltype, ()))
+function Base.similar(
+    ::Type{A},
+    axes::Tuple{TAxis{Int},Vararg{TAxis{Int},Nm1}}
+) where {A<:AbstractArray,Nm1}
+    ipos = index_pos(axes)
+    paren = similar(A, map(parent, axes))
+    ipos(paren)
+end
 
 ###
 ### unsafe and strided stuff
